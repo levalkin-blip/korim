@@ -1,0 +1,1427 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>קוראים בגדול</title>
+<meta name="theme-color" content="#1f3a68">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root {
+  --ui-bg: #e9edf2;
+  --ui-surface: #ffffff;
+  --ui-ink: #15202b;
+  --ui-muted: #4d5b6a;
+  --ui-line: #c3ccd6;
+  --ui-strong: #1f3a68;
+  --ui-on-strong: #ffffff;
+  --ui-mark: #ffd23f;
+  --danger: #a3261c;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ui-bg: #10161d; --ui-surface: #1b232d; --ui-ink: #eef2f6; --ui-muted: #a8b4c0;
+    --ui-line: #34404d; --ui-strong: #9db8e8; --ui-on-strong: #0d1520; --ui-mark: #ffd23f; --danger: #ff8a7f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ui-bg: #10161d; --ui-surface: #1b232d; --ui-ink: #eef2f6; --ui-muted: #a8b4c0;
+  --ui-line: #34404d; --ui-strong: #9db8e8; --ui-on-strong: #0d1520; --ui-mark: #ffd23f; --danger: #ff8a7f;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  background: var(--ui-bg); color: var(--ui-ink);
+  font-family: "Noto Sans Hebrew", "Rubik", "Arial Hebrew", Arial, system-ui, sans-serif;
+  font-size: 18px; line-height: 1.5;
+  -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--ui-mark); outline-offset: 2px; }
+.hidden { display: none !important; }
+.screen { position: absolute; inset: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px) 0; display: flex; flex-direction: column; }
+
+/* ---------- library ---------- */
+#lib header {
+  display: flex; align-items: center; gap: 12px; padding: 18px 22px 10px;
+}
+#lib h1 { margin: 0; font-size: 34px; line-height: 1.15; font-weight: 800; letter-spacing: -0.01em; flex: 1; }
+#lib h1 span { display: inline-block; background: var(--ui-mark); color: #15202b; padding: 0 10px; border-radius: 8px; }
+.icon-btn {
+  width: 56px; height: 56px; border-radius: 16px; border: 2px solid var(--ui-line);
+  background: var(--ui-surface); display: grid; place-items: center; position: relative; overflow: hidden;
+}
+.icon-btn svg { width: 28px; height: 28px; }
+.hold-fill { position: absolute; inset: auto 0 0 0; height: 0; background: var(--ui-mark); opacity: .55; }
+.holding .hold-fill { height: 100%; transition: height 2.4s linear; }
+#shelf {
+  flex: 1; overflow-y: auto; padding: 8px 22px 28px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 22px; align-content: start;
+}
+.book {
+  border: 0; background: none; padding: 0; text-align: start; display: flex; flex-direction: column; gap: 10px;
+}
+.book .cover {
+  aspect-ratio: 3 / 4; width: 100%; border-radius: 6px 14px 14px 6px; background: var(--ui-surface);
+  border: 2px solid var(--ui-line); overflow: hidden; display: grid; place-items: center;
+  box-shadow: inset -10px 0 0 rgba(0,0,0,.06);
+}
+.book img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.book .name { font-weight: 700; font-size: 20px; line-height: 1.3; }
+.book.add .cover { border-style: dashed; color: var(--ui-muted); }
+.book.add .cover svg { width: 56px; height: 56px; }
+.empty { grid-column: 1 / -1; max-width: 34em; padding: 40px 4px; }
+.empty h2 { font-size: 26px; margin: 0 0 6px; }
+.empty p { color: var(--ui-muted); margin: 0 0 22px; }
+.primary {
+  border: 0; border-radius: 14px; background: var(--ui-strong); color: var(--ui-on-strong);
+  padding: 14px 26px; font-weight: 700; font-size: 20px;
+}
+.ghost { border: 2px solid var(--ui-line); background: var(--ui-surface); border-radius: 14px; padding: 12px 20px; font-weight: 600; }
+
+/* ---------- reader ---------- */
+#reader { background: var(--rbg); color: var(--rfg); --btn: 92px; }
+#reader .rbar {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px; flex: 0 0 auto;
+  border-bottom: 2px solid color-mix(in srgb, var(--rfg) 35%, transparent);
+}
+#reader .rbar .icon-btn { background: transparent; border-color: color-mix(in srgb, var(--rfg) 45%, transparent); width: 52px; height: 52px; }
+#pageLabel { flex: 1; text-align: center; font-size: 20px; font-weight: 700; }
+#stage { position: relative; flex: 1; overflow: hidden; touch-action: none; }
+#pageCv, #ovCv, #magCv { position: absolute; display: block; }
+#ovCv { inset: 0; pointer-events: none; }
+#magCv {
+  pointer-events: none; border-radius: 16px;
+  outline: 5px solid var(--rfg); outline-offset: 0;
+  box-shadow: 0 0 0 9px var(--rbg), 0 0 0 11px color-mix(in srgb, var(--rfg) 40%, transparent);
+}
+#ribbon { position: absolute; width: 30px; height: 54px; pointer-events: none; color: var(--rfg); }
+#busy {
+  position: absolute; inset: 0; display: grid; place-items: center; font-size: 22px; font-weight: 700;
+  pointer-events: none;
+}
+#reader nav {
+  flex: 0 0 auto; display: flex; gap: 14px; padding: 12px 14px calc(12px + 0px);
+  border-top: 2px solid color-mix(in srgb, var(--rfg) 35%, transparent);
+}
+.navbtn {
+  height: var(--btn); border-radius: 22px; border: 4px solid var(--rfg); background: transparent; color: var(--rfg);
+  display: flex; align-items: center; justify-content: center; gap: 12px; font-size: calc(var(--btn) * 0.3); font-weight: 800;
+}
+.navbtn.big { flex: 1; }
+.navbtn svg { width: calc(var(--btn) * 0.5); height: calc(var(--btn) * 0.5); flex: 0 0 auto; }
+.navbtn.mark { width: calc(var(--btn) * 1.25); flex: 0 0 auto; }
+.navbtn.mark.on { background: var(--rfg); color: var(--rbg); }
+.navbtn:active { transform: scale(.97); }
+
+/* ---------- overlays ---------- */
+.scrim { position: absolute; inset: 0; background: rgba(8, 14, 22, .55); display: flex; align-items: flex-end; justify-content: center; z-index: 20; }
+.scrim.center { align-items: center; }
+.sheet {
+  background: var(--ui-bg); color: var(--ui-ink); width: min(820px, 100%); max-height: 82%;
+  border-radius: 22px 22px 0 0; display: flex; flex-direction: column; overflow: hidden;
+}
+.scrim.center .sheet { border-radius: 22px; max-height: 92%; width: min(760px, calc(100% - 24px)); }
+.sheet > header { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 2px solid var(--ui-line); }
+.sheet > header h2 { margin: 0; font-size: 24px; flex: 1; }
+.sheet .body { overflow-y: auto; padding: 8px 20px 28px; -webkit-user-select: none; }
+.sec { margin-top: 18px; }
+.sec h3 { font-size: 19px; margin: 0 0 8px; color: var(--ui-strong); }
+.row { background: var(--ui-surface); border: 2px solid var(--ui-line); border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+.row label.t { display: block; font-weight: 700; margin-bottom: 8px; }
+.row .hint { color: var(--ui-muted); font-size: 15px; margin-top: 6px; }
+.seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg button { flex: 1 1 auto; min-height: 46px; border-radius: 10px; border: 2px solid var(--ui-line); background: var(--ui-bg); font-weight: 600; padding: 6px 12px; }
+.seg button[aria-pressed="true"] { background: var(--ui-strong); color: var(--ui-on-strong); border-color: var(--ui-strong); }
+.rng { display: flex; align-items: center; gap: 14px; }
+.rng input { flex: 1; height: 36px; accent-color: var(--ui-strong); }
+.rng output { min-width: 4.2em; text-align: center; font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; }
+.presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.presets button { border-radius: 12px; padding: 10px 8px 8px; border: 3px solid var(--ui-line); display: flex; flex-direction: column; align-items: center; gap: 6px; background: var(--ui-surface); }
+.presets button[aria-pressed="true"] { border-color: var(--ui-strong); box-shadow: 0 0 0 3px var(--ui-mark); }
+.presets .sw { width: 100%; height: 48px; border-radius: 8px; display: grid; place-items: center; font-size: 26px; font-weight: 800; }
+.presets .nm { font-size: 15px; font-weight: 600; }
+.colors { display: flex; gap: 18px; flex-wrap: wrap; }
+.colors label { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.colors input { width: 56px; height: 40px; border: 2px solid var(--ui-line); border-radius: 8px; padding: 0; background: none; }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 14px; font-weight: 700; }
+.switch button { width: 66px; height: 38px; border-radius: 19px; border: 2px solid var(--ui-line); background: var(--ui-bg); position: relative; flex: 0 0 auto; }
+.switch button::after { content: ""; position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%; background: var(--ui-muted); }
+.switch button[aria-pressed="true"] { background: var(--ui-strong); border-color: var(--ui-strong); }
+.switch button[aria-pressed="true"]::after { right: auto; left: 4px; background: var(--ui-on-strong); }
+.booklist .bk { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--ui-line); }
+.booklist .bk:last-child { border-bottom: 0; }
+.booklist .bk span { flex: 1; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.danger { color: var(--danger); border-color: currentColor; }
+.foot { display: flex; gap: 12px; padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 2px solid var(--ui-line); }
+.foot .primary { flex: 1; }
+
+#gate .sheet { max-width: 460px; }
+#gate .body { padding: 22px; text-align: center; }
+#gate .q { font-size: 30px; font-weight: 800; margin: 8px 0 16px; direction: ltr; unicode-bidi: isolate; }
+#gate input { font-size: 30px; width: 6em; text-align: center; padding: 8px; border-radius: 12px; border: 2px solid var(--ui-line); background: var(--ui-surface); color: var(--ui-ink); }
+#gate .err { color: var(--danger); min-height: 1.6em; margin-top: 8px; font-weight: 600; }
+#gate .acts { display: flex; gap: 12px; justify-content: center; margin-top: 12px; }
+
+#marksGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; padding-top: 10px; }
+#marksGrid button { border: 3px solid var(--ui-line); border-radius: 12px; background: var(--ui-surface); padding: 8px; display: flex; flex-direction: column; gap: 8px; align-items: center; font-weight: 800; font-size: 20px; }
+#marksGrid canvas, #marksGrid .ph { width: 100%; aspect-ratio: 3 / 4; border-radius: 6px; background: var(--ui-bg); object-fit: contain; }
+#marksGrid button.here { border-color: var(--ui-strong); box-shadow: 0 0 0 3px var(--ui-mark); }
+
+#calib .body p { margin: 4px 0 14px; color: var(--ui-muted); }
+#calibList { display: flex; flex-direction: column; gap: 12px; }
+#calibList button { display: flex; align-items: center; gap: 14px; padding: 10px; border-radius: 14px; border: 2px solid var(--ui-line); background: var(--ui-surface); text-align: start; }
+#calibList button.sel { border-color: var(--ui-strong); box-shadow: 0 0 0 3px var(--ui-mark); }
+#calibList b { min-width: 3.4em; font-size: 22px; direction: ltr; }
+#calibList canvas { border-radius: 8px; max-width: 100%; }
+
+#toast {
+  position: absolute; left: 50%; bottom: 140px; transform: translateX(-50%); z-index: 40;
+  background: var(--ui-ink); color: var(--ui-bg); padding: 12px 22px; border-radius: 14px; font-weight: 700; font-size: 20px;
+  pointer-events: none; max-width: 90%; text-align: center;
+}
+#fatal { position: absolute; inset: 0; display: grid; place-items: center; padding: 30px; text-align: center; font-size: 22px; z-index: 50; background: var(--ui-bg); }
+@media (prefers-reduced-motion: reduce) { .holding .hold-fill { transition: none; } .navbtn:active { transform: none; } }
+@media (max-width: 560px) { #lib h1 { font-size: 26px; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-mark" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-mark-on" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z" fill="currentColor" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 7.5h7v12H4zM13 7.5h7v12h-7z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M4 7.5c2.5-1.6 5-1.6 7 0M13 7.5c2-1.6 4.5-1.6 7 0" fill="none" stroke="currentColor" stroke-width="2.2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<section id="lib" class="screen">
+  <header>
+    <h1><span>קוראים בגדול</span></h1>
+    <button class="icon-btn" id="libGear" aria-label="הגדרות (לחיצה ארוכה)"><span class="hold-fill"></span><svg><use href="#i-gear"/></svg></button>
+  </header>
+  <div id="shelf"></div>
+</section>
+
+<section id="reader" class="screen hidden">
+  <div class="rbar">
+    <button class="icon-btn" id="homeBtn" aria-label="לספרייה"><svg><use href="#i-home"/></svg></button>
+    <div id="pageLabel"></div>
+    <button class="icon-btn" id="gearBtn" aria-label="הגדרות (לחיצה ארוכה)"><span class="hold-fill"></span><svg><use href="#i-gear"/></svg></button>
+  </div>
+  <div id="stage">
+    <canvas id="pageCv"></canvas>
+    <canvas id="ovCv"></canvas>
+    <svg id="ribbon" class="hidden" viewBox="0 0 30 54"><path d="M0 0h30v54l-15-12L0 54z" fill="currentColor"/></svg>
+    <canvas id="magCv" class="hidden"></canvas>
+    <div id="busy" class="hidden">מכין את העמוד…</div>
+  </div>
+  <nav id="navBar">
+    <button class="navbtn big" id="prevBtn" aria-label="העמוד הקודם"><svg id="prevIco"><use href="#i-chev"/></svg><span>הקודם</span></button>
+    <button class="navbtn mark" id="markBtn" aria-label="סימנייה (לחיצה ארוכה לרשימה)"><svg><use id="markUse" href="#i-mark"/></svg></button>
+    <button class="navbtn big" id="nextBtn" aria-label="העמוד הבא"><span>הבא</span><svg id="nextIco"><use href="#i-chev"/></svg></button>
+  </nav>
+</section>
+
+<div id="gate" class="scrim center hidden">
+  <div class="sheet">
+    <header><h2>הגדרות להורים</h2></header>
+    <div class="body">
+      <div class="q" id="gateQ"></div>
+      <input id="gateIn" inputmode="numeric" autocomplete="off" aria-label="תשובה">
+      <div class="err" id="gateErr"></div>
+      <div class="acts"><button class="primary" id="gateOk">כניסה</button><button class="ghost" id="gateNo">ביטול</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="settings" class="scrim hidden">
+  <div class="sheet">
+    <header><h2>הגדרות</h2><button class="icon-btn" id="setClose" aria-label="סגירה"><svg><use href="#i-x"/></svg></button></header>
+    <div class="body" id="setBody"></div>
+    <div class="foot"><button class="primary" id="setDone">סגירה</button><button class="ghost" id="setReset">איפוס הגדרות</button></div>
+  </div>
+</div>
+
+<div id="marks" class="scrim hidden">
+  <div class="sheet">
+    <header><h2>הסימניות שלי</h2><button class="icon-btn" id="marksClose" aria-label="סגירה"><svg><use href="#i-x"/></svg></button></header>
+    <div class="body"><div id="marksGrid"></div></div>
+  </div>
+</div>
+
+<div id="calib" class="scrim center hidden">
+  <div class="sheet">
+    <header><h2>כיול הגדלה</h2><button class="icon-btn" id="calibClose" aria-label="סגירה"><svg><use href="#i-x"/></svg></button></header>
+    <div class="body">
+      <p>בקשו ממנו לקרוא כל שורה בקול, מהגדולה אל הקטנה. בחרו את השורה הקטנה ביותר שהוא קורא בשטף ובלי להתאמץ. אם הוא מתעייף מהר, העלו דרגה אחת.</p>
+      <div id="calibList"></div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileIn" accept="application/pdf,.pdf" class="hidden">
+<div id="toast" class="hidden"></div>
+
+<script src="lib/pdf.min.js"></script>
+<script>
+/* Page analysis for scanned text pages. Pure functions on typed arrays. */
+(function (root) {
+  'use strict';
+
+  function toGray(rgba, w, h) {
+    const g = new Uint8Array(w * h);
+    for (let i = 0, j = 0; i < g.length; i++, j += 4) {
+      g[i] = (rgba[j] * 77 + rgba[j + 1] * 150 + rgba[j + 2] * 29) >> 8;
+    }
+    return g;
+  }
+
+  // Divide by a smooth estimate of the paper brightness so shading and yellowed paper become uniform white.
+  function flattenBackground(gray, w, h) {
+    const B = 48;
+    const bw = Math.ceil(w / B), bh = Math.ceil(h / B);
+    const bg = new Float32Array(bw * bh);
+    const hist = new Uint32Array(256);
+    for (let by = 0; by < bh; by++) {
+      for (let bx = 0; bx < bw; bx++) {
+        hist.fill(0);
+        const x0 = bx * B, y0 = by * B, x1 = Math.min(w, x0 + B), y1 = Math.min(h, y0 + B);
+        let n = 0;
+        for (let y = y0; y < y1; y++) {
+          let i = y * w + x0;
+          for (let x = x0; x < x1; x++, i++) { hist[gray[i]]++; n++; }
+        }
+        // 85th percentile = paper even when the block holds a lot of ink
+        let target = n * 0.85, acc = 0, v = 0;
+        for (; v < 256; v++) { acc += hist[v]; if (acc >= target) break; }
+        bg[by * bw + bx] = Math.max(v, 60);
+      }
+    }
+    // smooth blocks (two 3x3 passes)
+    let cur = bg;
+    for (let pass = 0; pass < 2; pass++) {
+      const nxt = new Float32Array(bw * bh);
+      for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) {
+        let s = 0, c = 0, mx = 0;
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const yy = y + dy, xx = x + dx;
+          if (yy < 0 || xx < 0 || yy >= bh || xx >= bw) continue;
+          const val = cur[yy * bw + xx]; s += val; c++; if (val > mx) mx = val;
+        }
+        // lean toward the brighter neighbours so big dark areas (pictures) do not pull paper down
+        nxt[y * bw + x] = 0.5 * (s / c) + 0.5 * mx;
+      }
+      cur = nxt;
+    }
+    const out = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) {
+      const fy = Math.min(bh - 1.001, Math.max(0, (y + 0.5) / B - 0.5));
+      const y0 = Math.floor(fy), ty = fy - y0;
+      for (let x = 0; x < w; x++) {
+        const fx = Math.min(bw - 1.001, Math.max(0, (x + 0.5) / B - 0.5));
+        const x0 = Math.floor(fx), tx = fx - x0;
+        const a = cur[y0 * bw + x0], b = cur[y0 * bw + Math.min(bw - 1, x0 + 1)];
+        const c = cur[Math.min(bh - 1, y0 + 1) * bw + x0], d = cur[Math.min(bh - 1, y0 + 1) * bw + Math.min(bw - 1, x0 + 1)];
+        const p = (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
+        const i = y * w + x;
+        const v = gray[i] * 255 / p;
+        out[i] = v > 255 ? 255 : v;
+      }
+    }
+    return out;
+  }
+
+  // 0 = paper, 255 = full ink
+  function inkAlpha(norm) {
+    const hist = new Uint32Array(256);
+    for (let i = 0; i < norm.length; i++) hist[norm[i]]++;
+    // black point: 10th percentile of the dark pixels
+    let dark = 0; for (let v = 0; v < 170; v++) dark += hist[v];
+    let bp = 40;
+    if (dark > 50) { let acc = 0; for (let v = 0; v < 170; v++) { acc += hist[v]; if (acc >= dark * 0.1) { bp = v; break; } } }
+    const wp = 225;
+    bp = Math.min(bp, 150);
+    const lut = new Uint8Array(256);
+    for (let v = 0; v < 256; v++) {
+      let a = (wp - v) / (wp - bp);
+      a = a < 0 ? 0 : a > 1 ? 1 : a;
+      lut[v] = Math.round(a * 255);
+    }
+    const out = new Uint8Array(norm.length);
+    for (let i = 0; i < norm.length; i++) out[i] = lut[norm[i]];
+    return out;
+  }
+
+  function binarize(alpha, thr) {
+    const b = new Uint8Array(alpha.length);
+    const t = thr == null ? 115 : thr;
+    for (let i = 0; i < alpha.length; i++) b[i] = alpha[i] > t ? 1 : 0;
+    return b;
+  }
+
+  // Scanner shadows along the page edges: wipe rows/columns near the edge that are mostly ink.
+  function clearBorders(bin, w, h) {
+    const lim = 0.09;
+    const colInk = new Uint32Array(w), rowInk = new Uint32Array(h);
+    for (let y = 0; y < h; y++) { let r = 0; const o = y * w; for (let x = 0; x < w; x++) { const v = bin[o + x]; r += v; colInk[x] += v; } rowInk[y] = r; }
+    const wipeCols = (from, to, step) => {
+      let x = from, lastDark = -1;
+      for (let k = 0; k < Math.floor(w * lim); k++, x += step) { if (colInk[x] > h * 0.35) lastDark = x; }
+      if (lastDark < 0) return;
+      const end = lastDark + step * Math.max(2, Math.round(w * 0.004));
+      for (let xx = from; step > 0 ? xx <= end : xx >= end; xx += step) { if (xx < 0 || xx >= w) break; for (let y = 0; y < h; y++) bin[y * w + xx] = 0; }
+    };
+    const wipeRows = (from, to, step) => {
+      let y = from, lastDark = -1;
+      for (let k = 0; k < Math.floor(h * lim); k++, y += step) { if (rowInk[y] > w * 0.35) lastDark = y; }
+      if (lastDark < 0) return;
+      const end = lastDark + step * Math.max(2, Math.round(h * 0.004));
+      for (let yy = from; step > 0 ? yy <= end : yy >= end; yy += step) { if (yy < 0 || yy >= h) break; bin.fill(0, yy * w, yy * w + w); }
+    };
+    wipeCols(0, w, 1); wipeCols(w - 1, -1, -1); wipeRows(0, h, 1); wipeRows(h - 1, -1, -1);
+    return bin;
+  }
+
+
+  // Remove every ink blob that touches the page edge (scanner shadows, binding, cut-off neighbours).
+  function clearEdgeConnected(bin, w, h) {
+    const m = Math.max(2, Math.round(Math.min(w, h) * 0.006));
+    const stack = new Int32Array(w * h > 4e6 ? 4e6 : w * h);
+    let sp = 0;
+    const push = i => { if (bin[i]) { bin[i] = 0; if (sp < stack.length) stack[sp++] = i; } };
+    for (let y = 0; y < h; y++) {
+      if (y < m || y >= h - m) { for (let x = 0; x < w; x++) push(y * w + x); }
+      else { for (let x = 0; x < m; x++) { push(y * w + x); push(y * w + w - 1 - x); } }
+      while (sp) {
+        const i = stack[--sp], x = i % w;
+        if (x > 0) push(i - 1); if (x < w - 1) push(i + 1);
+        if (i >= w) push(i - w); if (i < w * (h - 1)) push(i + w);
+      }
+    }
+    return bin;
+  }
+
+  // Projection-profile skew estimate, degrees. Positive = text rises to the right.
+  function estimateSkew(bin, w, h) {
+    const f = Math.max(1, Math.round(w / 600));
+    const pts = [];
+    for (let y = 0; y < h; y += f) for (let x = 0; x < w; x += f) if (bin[y * w + x]) pts.push(x / f, y / f);
+    if (pts.length < 400) return 0;
+    const H = Math.ceil(h / f) + Math.ceil(w / f) * 2 + 4;
+    const off = Math.ceil(w / f) + 2;
+    const hist = new Float32Array(H);
+    const score = (deg) => {
+      hist.fill(0);
+      const t = Math.tan(deg * Math.PI / 180);
+      for (let i = 0; i < pts.length; i += 2) hist[(pts[i + 1] - pts[i] * t + off) | 0]++;
+      let s = 0; for (let i = 1; i < H; i++) { const d = hist[i] - hist[i - 1]; s += d * d; }
+      return s;
+    };
+    let best = 0, bs = -1;
+    for (let a = -4; a <= 4.001; a += 0.25) { const s = score(a); if (s > bs) { bs = s; best = a; } }
+    const c = best;
+    for (let a = c - 0.25; a <= c + 0.25; a += 0.05) { const s = score(a); if (s > bs) { bs = s; best = a; } }
+    return Math.round(best * 100) / 100;
+  }
+
+  function contentBox(bin, w, h) {
+    const rows = new Uint32Array(h), cols = new Uint32Array(w);
+    for (let y = 0; y < h; y++) { const o = y * w; let r = 0; for (let x = 0; x < w; x++) { if (bin[o + x]) { r++; cols[x]++; } } rows[y] = r; }
+    const rt = Math.max(2, w * 0.002), ct = Math.max(2, h * 0.002);
+    let y0 = 0, y1 = h - 1, x0 = 0, x1 = w - 1;
+    while (y0 < h - 1 && rows[y0] < rt) y0++;
+    while (y1 > y0 && rows[y1] < rt) y1--;
+    while (x0 < w - 1 && cols[x0] < ct) x0++;
+    while (x1 > x0 && cols[x1] < ct) x1--;
+    if (y1 - y0 < h * 0.05 || x1 - x0 < w * 0.05) return { x0: 0, y0: 0, x1: w, y1: h, empty: true };
+    const m = Math.round(Math.max(x1 - x0, y1 - y0) * 0.03);
+    return { x0: Math.max(0, x0 - m), y0: Math.max(0, y0 - m), x1: Math.min(w, x1 + m + 1), y1: Math.min(h, y1 + m + 1) };
+  }
+
+  function median(a) { if (!a.length) return 0; const s = a.slice().sort((p, q) => p - q); return s[s.length >> 1]; }
+
+  function rowProfile(bin, w, box) {
+    const p = new Float32Array(box.y1 - box.y0);
+    for (let y = box.y0; y < box.y1; y++) { let r = 0; const o = y * w; for (let x = box.x0; x < box.x1; x++) r += bin[o + x]; p[y - box.y0] = r; }
+    return p;
+  }
+
+  function runsOf(p, thr) {
+    const runs = []; let s = -1;
+    for (let i = 0; i < p.length; i++) {
+      if (p[i] > thr) { if (s < 0) s = i; } else if (s >= 0) { runs.push([s, i]); s = -1; }
+    }
+    if (s >= 0) runs.push([s, p.length]);
+    return runs;
+  }
+
+  function splitTall(run, p, H) {
+    const [a, b] = run;
+    if (b - a < H * 1.6) return [run];
+    const sm = new Float32Array(b - a);
+    for (let i = a; i < b; i++) { let s = 0, c = 0; for (let k = -2; k <= 2; k++) { const j = i + k; if (j >= a && j < b) { s += p[j]; c++; } } sm[i - a] = s / c; }
+    let peak = 0; for (const v of sm) if (v > peak) peak = v;
+    // best valley at least 0.55H from both ends
+    let bi = -1, bv = Infinity;
+    for (let i = Math.round(H * 0.55); i < sm.length - Math.round(H * 0.55); i++) {
+      if (sm[i] < bv) { bv = sm[i]; bi = i; }
+    }
+    if (bi < 0 || bv > peak * 0.35) return [run];
+    return splitTall([a, a + bi], p, H).concat(splitTall([a + bi, b], p, H));
+  }
+
+  // Returns text lines and figure regions in reading order (top to bottom).
+  function findLines(bin, w, h, box) {
+    const p = rowProfile(bin, w, box);
+    const bw = box.x1 - box.x0;
+    let runs = runsOf(p, Math.max(1, bw * 0.003));
+    runs = runs.filter(r => r[1] - r[0] >= 2);
+    if (!runs.length) return { lines: [], H: 0 };
+    let H = median(runs.map(r => r[1] - r[0]));
+    // merge fragments separated by tiny gaps (dots, punctuation, broken strokes)
+    const merged = [];
+    for (const r of runs) {
+      const last = merged[merged.length - 1];
+      if (last && r[0] - last[1] < H * 0.2 && (r[1] - last[0]) < H * 1.5) last[1] = r[1];
+      else merged.push(r.slice());
+    }
+    H = median(merged.filter(r => r[1] - r[0] > 3).map(r => r[1] - r[0])) || H;
+    let split = [];
+    for (const r of merged) split = split.concat(splitTall(r, p, H));
+    // attach tiny specks to the nearest neighbour or drop them
+    const lines = [];
+    for (let i = 0; i < split.length; i++) {
+      const r = split[i];
+      const ht = r[1] - r[0];
+      if (ht < H * 0.3) {
+        let ink = 0; for (let y = r[0]; y < r[1]; y++) ink += p[y];
+        const prev = lines[lines.length - 1], next = split[i + 1];
+        const dPrev = prev ? r[0] - prev.b : Infinity, dNext = next ? next[0] - r[1] : Infinity;
+        if (Math.min(dPrev, dNext) < H * 0.45) {
+          if (dPrev <= dNext && prev) { prev.b = r[1]; continue; }
+          if (next) { next[0] = r[0]; continue; }
+        }
+        if (ink < bw * H * 0.01) continue;
+      }
+      lines.push({ a: r[0], b: r[1] });
+    }
+    H = median(lines.map(l => l.b - l.a)) || H;
+    const out = [];
+    for (const l of lines) {
+      const ht = l.b - l.a;
+      const y0 = box.y0 + l.a, y1 = box.y0 + l.b;
+      // horizontal extent
+      let xa = box.x1, xb = box.x0;
+      for (let y = y0; y < y1; y++) { const o = y * w; for (let x = box.x0; x < box.x1; x++) if (bin[o + x]) { if (x < xa) xa = x; if (x > xb) xb = x; } }
+      let ink = 0; for (let y = l.a; y < l.b; y++) ink += p[y];
+      const density = ink / Math.max(1, (xb - xa + 1) * ht);
+      const figure = ht > H * 2.2 || density > 0.55;
+      // baseline: last row whose ink is at least half of the band peak
+      let peak = 0; for (let y = l.a; y < l.b; y++) if (p[y] > peak) peak = p[y];
+      let base = l.b - 1; while (base > l.a && p[base] < peak * 0.5) base--;
+      out.push({ y0, y1, x0: xa, x1: xb + 1, base: box.y0 + base + 1, figure });
+    }
+    return { lines: out, H };
+  }
+
+  function otsu(values, lo, hi, bins) {
+    const hist = new Float64Array(bins);
+    for (const v of values) { const k = Math.min(bins - 1, Math.max(0, Math.floor((v - lo) / (hi - lo) * bins))); hist[k]++; }
+    const n = values.length; let sum = 0; for (let i = 0; i < bins; i++) sum += i * hist[i];
+    let sB = 0, wB = 0, best = 0, bt = 0;
+    for (let i = 0; i < bins; i++) {
+      wB += hist[i]; if (!wB) continue; const wF = n - wB; if (!wF) break;
+      sB += i * hist[i];
+      const mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) * (mB - mF);
+      if (v > best) { best = v; bt = i; }
+    }
+    return lo + (bt + 1) / bins * (hi - lo);
+  }
+
+  function findWords(bin, w, lines, H) {
+    const perLine = [], allGaps = [];
+    for (const L of lines) {
+      if (L.figure) { perLine.push(null); continue; }
+      const n = L.x1 - L.x0, col = new Uint16Array(n);
+      for (let y = L.y0; y < L.y1; y++) { const o = y * w + L.x0; for (let x = 0; x < n; x++) col[x] += bin[o + x]; }
+      const runs = []; let s = -1;
+      for (let x = 0; x < n; x++) { if (col[x] > 0) { if (s < 0) s = x; } else if (s >= 0) { runs.push([s, x]); s = -1; } }
+      if (s >= 0) runs.push([s, n]);
+      const lh = L.y1 - L.y0;
+      for (let i = 1; i < runs.length; i++) allGaps.push((runs[i][0] - runs[i - 1][1]) / lh);
+      perLine.push(runs);
+    }
+    let thr = allGaps.length > 8 ? otsu(allGaps, 0, 1.5, 120) : 0.3;
+    thr = Math.min(0.6, Math.max(0.14, thr));
+    const wordGaps = [];
+    lines.forEach((L, li) => {
+      const runs = perLine[li];
+      if (!runs) { L.words = [{ x0: L.x0, x1: L.x1 }]; return; }
+      const lh = L.y1 - L.y0, words = [];
+      for (const r of runs) {
+        const last = words[words.length - 1];
+        if (last && (r[0] - last[1]) / lh < thr) last[1] = r[1];
+        else { if (last) wordGaps.push((r[0] - last[1]) / lh); words.push(r.slice()); }
+      }
+      const pad = Math.max(1, Math.round(lh * 0.04));
+      L.words = words.map(r => ({ x0: Math.max(0, L.x0 + r[0] - pad), x1: Math.min(w, L.x0 + r[1] + pad) }));
+    });
+    return { thr, wordGap: median(wordGaps) || 0.35 };
+  }
+
+  // Square max-filter (separable) to thicken strokes.
+  function dilate(alpha, w, h, r) {
+    if (r <= 0) return alpha;
+    const tmp = new Uint8Array(alpha.length), out = new Uint8Array(alpha.length);
+    for (let y = 0; y < h; y++) {
+      const o = y * w;
+      for (let x = 0; x < w; x++) {
+        let m = 0; const a = Math.max(0, x - r), b = Math.min(w - 1, x + r);
+        for (let k = a; k <= b; k++) { const v = alpha[o + k]; if (v > m) m = v; }
+        tmp[o + x] = m;
+      }
+    }
+    for (let x = 0; x < w; x++) {
+      for (let y = 0; y < h; y++) {
+        let m = 0; const a = Math.max(0, y - r), b = Math.min(h - 1, y + r);
+        for (let k = a; k <= b; k++) { const v = tmp[k * w + x]; if (v > m) m = v; }
+        out[y * w + x] = m;
+      }
+    }
+    return out;
+  }
+
+  // Full analysis on an already de-skewed RGBA page.
+  function analyze(rgba, w, h) {
+    const gray = toGray(rgba, w, h);
+    const norm = flattenBackground(gray, w, h);
+    const alpha = inkAlpha(norm);
+    const bin = clearEdgeConnected(clearBorders(binarize(alpha), w, h), w, h);
+    // wipe the same border areas from alpha
+    // wipe removed blobs (and their soft edges) from alpha
+    const cut = new Uint8Array(alpha.length);
+    for (let i = 0; i < alpha.length; i++) if (!bin[i] && alpha[i] > 115) cut[i] = 1;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (cut[i] || (x > 0 && cut[i - 1]) || (x < w - 1 && cut[i + 1]) || (y > 0 && cut[i - w]) || (y < h - 1 && cut[i + w])) alpha[i] = 0;
+    }
+    const box = contentBox(bin, w, h);
+    const { lines, H } = findLines(bin, w, h, box);
+    const wg = findWords(bin, w, lines, H);
+    return { alpha, bin, box, lines, H, wordGap: wg.wordGap, gapThr: wg.thr };
+  }
+
+  // Skew only (cheap pre-pass before rotation).
+  function skewOf(rgba, w, h) {
+    const gray = toGray(rgba, w, h);
+    const norm = flattenBackground(gray, w, h);
+    const bin = clearEdgeConnected(clearBorders(binarize(inkAlpha(norm)), w, h), w, h);
+    return estimateSkew(bin, w, h);
+  }
+
+  const api = { clearEdgeConnected, toGray, flattenBackground, inkAlpha, binarize, clearBorders, estimateSkew, contentBox, findLines, findWords, dilate, analyze, skewOf };
+  root.Proc = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof self !== 'undefined' ? self : globalThis);
+
+</script>
+<script>
+'use strict';
+(function () {
+const $ = s => document.querySelector(s);
+const DPR = () => Math.min(window.devicePixelRatio || 1, 2.5);
+const tick = () => new Promise(r => setTimeout(r, 0));
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+
+//CORE-START
+const PRESETS = [
+  { id: 'warm', name: 'נייר חם', fg: '#17130d', bg: '#efe2bf', sharp: 1, bold: 0 },
+  { id: 'grey', name: 'אפור רך', fg: '#000000', bg: '#c9c9c9', sharp: 1, bold: 0 },
+  { id: 'white', name: 'לבן', fg: '#000000', bg: '#ffffff', sharp: 1, bold: 0 },
+  { id: 'dark', name: 'כהה', fg: '#f0f0f0', bg: '#000000', sharp: 1, bold: 0 },
+  { id: 'yellow', name: 'צהוב על שחור', fg: '#ffe45c', bg: '#000000', sharp: 1, bold: 1 },
+  { id: 'bold', name: 'מודגש וחד', fg: '#000000', bg: '#ffffff', sharp: 2, bold: 2 },
+];
+const DEFAULTS = {
+  preset: 'warm', fg: '#17130d', bg: '#efe2bf', sharp: 1, bold: 0,
+  zoom: 2, lines: 1, mode: 'reflow', place: 'float', wordSp: 0.3, lineSp: 1.3,
+  fingerBelow: false, keep: true, dim: 0.35, frame: true,
+  btn: 'L', vibrate: true, navDelay: 450, autoOpen: true,
+};
+let S = Object.assign({}, DEFAULTS);
+let LUT = null;
+
+function mkCanvas(w, h) { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; }
+function ctx2(c) { return c.getContext('2d', { willReadFrequently: true }); }
+function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+
+function buildLut() {
+  const f = hexRgb(S.fg), b = hexRgb(S.bg);
+  const [lo, hi] = [[0.06, 0.94], [0.22, 0.78], [0.4, 0.6]][S.sharp] || [0.22, 0.78];
+  const r = new Uint8Array(256), g = new Uint8Array(256), bl = new Uint8Array(256);
+  for (let v = 0; v < 256; v++) {
+    let t = (v / 255 - lo) / (hi - lo); t = clamp(t, 0, 1); t = t * t * (3 - 2 * t);
+    r[v] = Math.round(b[0] + (f[0] - b[0]) * t); g[v] = Math.round(b[1] + (f[1] - b[1]) * t); bl[v] = Math.round(b[2] + (f[2] - b[2]) * t);
+  }
+  LUT = { r, g, b: bl };
+}
+
+// The working images hold ink as brightness (white = ink). Map that to the reading colours.
+function colorize(ctx, w, h) {
+  if (w < 1 || h < 1) return;
+  const id = ctx.getImageData(0, 0, w, h), d = id.data, R = LUT.r, G = LUT.g, B = LUT.b;
+  for (let i = 0; i < d.length; i += 4) { const v = d[i]; d[i] = R[v]; d[i + 1] = G[v]; d[i + 2] = B[v]; d[i + 3] = 255; }
+  ctx.putImageData(id, 0, 0);
+}
+
+function vpToPdf(book, vp) { return book.st.split ? { pn: (vp >> 1) + 1, half: vp & 1 } : { pn: vp + 1, half: -1 }; }
+
+async function renderRaw(book, vp, targetW) {
+  const { pn, half } = vpToPdf(book, vp);
+  const page = await book.doc.getPage(pn);
+  const v1 = page.getViewport({ scale: 1 });
+  let scale = (half >= 0 ? targetW * 2 : targetW) / v1.width;
+  const maxPx = 11e6;
+  if (v1.width * v1.height * scale * scale > maxPx) scale = Math.sqrt(maxPx / (v1.width * v1.height));
+  const vpt = page.getViewport({ scale });
+  const c1 = mkCanvas(Math.ceil(vpt.width), Math.ceil(vpt.height));
+  const x1 = ctx2(c1); x1.fillStyle = '#fff'; x1.fillRect(0, 0, c1.width, c1.height);
+  await page.render({ canvasContext: x1, viewport: vpt }).promise;
+  page.cleanup();
+  if (half < 0) return c1;
+  const hw = c1.width >> 1;
+  const takeRight = (half === 0) === (book.st.dir === 'rtl');
+  const c2 = mkCanvas(hw, c1.height);
+  ctx2(c2).drawImage(c1, takeRight ? c1.width - hw : 0, 0, hw, c1.height, 0, 0, hw, c1.height);
+  return c2;
+}
+
+async function buildEntry(book, vp) {
+  let src = await renderRaw(book, vp, 1900);
+  await tick();
+  const w = src.width, h = src.height;
+  let data = ctx2(src).getImageData(0, 0, w, h).data;
+  let skew = 0;
+  if (book.st.deskew) {
+    skew = Proc.skewOf(data, w, h);
+    await tick();
+    if (Math.abs(skew) >= 0.2) {
+      const c3 = mkCanvas(w, h), x3 = ctx2(c3);
+      x3.fillStyle = '#fff'; x3.fillRect(0, 0, w, h);
+      x3.translate(w / 2, h / 2); x3.rotate(-skew * Math.PI / 180); x3.drawImage(src, -w / 2, -h / 2);
+      src = c3; data = x3.getImageData(0, 0, w, h).data;
+    }
+  }
+  const r = Proc.analyze(data, w, h);
+  await tick();
+  const b = r.box, bw = b.x1 - b.x0, bh = b.y1 - b.y0;
+  const raw = new Uint8Array(bw * bh);
+  for (let y = 0; y < bh; y++) raw.set(r.alpha.subarray((y + b.y0) * w + b.x0, (y + b.y0) * w + b.x1), y * bw);
+  const lines = r.lines.map(L => ({
+    y0: L.y0 - b.y0, y1: L.y1 - b.y0, x0: L.x0 - b.x0, x1: L.x1 - b.x0, base: L.base - b.y0, figure: L.figure,
+    words: L.words.map(o => ({ x0: o.x0 - b.x0, x1: o.x1 - b.x0 })),
+  }));
+  const e = { vp, w: bw, h: bh, raw, lines, text: lines.filter(l => !l.figure), H: r.H || 40, wordGap: r.wordGap, skew, alphaCv: null, boldKey: -1 };
+  makeAlphaCanvas(e);
+  return e;
+}
+
+function makeAlphaCanvas(e) {
+  const r = Math.round(S.bold * Math.max(1, e.H / 45));
+  if (e.alphaCv && e.boldKey === r) return;
+  const a = r ? Proc.dilate(e.raw, e.w, e.h, r) : e.raw;
+  const c = e.alphaCv || mkCanvas(e.w, e.h), x = ctx2(c);
+  const id = x.createImageData(e.w, e.h), d = id.data;
+  for (let i = 0, j = 0; i < a.length; i++, j += 4) { const v = a[i]; d[j] = v; d[j + 1] = v; d[j + 2] = v; d[j + 3] = 255; }
+  x.putImageData(id, 0, 0);
+  e.alphaCv = c; e.boldKey = r;
+}
+
+// Re-flow the words of the chosen lines into rows that fit the window, at the chosen magnification.
+function renderReflow(e, lines, K, outW, dir, dpr) {
+  const pad = Math.round(12 * dpr);
+  let asc = 0, desc = 0;
+  for (const L of lines) { asc = Math.max(asc, L.base - L.y0); desc = Math.max(desc, L.y1 - L.base); }
+  const bandH = asc + desc;
+  const rowH = Math.ceil(bandH * K);
+  const rowGap = Math.round(rowH * (S.lineSp - 1));
+  const gap = Math.max(4, Math.round(e.wordGap * bandH * K * (1 + S.wordSp)));
+  const innerW = outW - 2 * pad;
+  const rows = [[]]; let rowW = 0;
+  for (const L of lines) {
+    const ws = L.words.slice().sort((a, b) => dir === 'rtl' ? b.x0 - a.x0 : a.x0 - b.x0);
+    for (const w of ws) {
+      const ww = Math.min(innerW, Math.round((w.x1 - w.x0) * K));
+      const need = rowW ? rowW + gap + ww : ww;
+      if (need > innerW && rowW > 0) { rows.push([]); rowW = ww; } else rowW = need;
+      rows[rows.length - 1].push({ L, w, ww });
+    }
+  }
+  const n = rows.length;
+  const outH = 2 * pad + n * rowH + (n - 1) * rowGap;
+  const c = mkCanvas(outW, outH), x = ctx2(c);
+  x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height);
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  rows.forEach((row, ri) => {
+    const top = pad + ri * (rowH + rowGap);
+    let cur = dir === 'rtl' ? outW - pad : pad;
+    for (const it of row) {
+      const { L, w, ww } = it;
+      const dx = dir === 'rtl' ? cur - ww : cur;
+      const sy = L.base - asc, sy0 = Math.max(0, sy), sy1 = Math.min(e.h, L.base + desc);
+      const sw = w.x1 - w.x0;
+      if (sy1 > sy0 && sw > 0) x.drawImage(e.alphaCv, w.x0, sy0, sw, sy1 - sy0, dx, top + (sy0 - sy) * K, ww, (sy1 - sy0) * K);
+      cur = dir === 'rtl' ? dx - gap : dx + ww + gap;
+    }
+  });
+  colorize(x, c.width, c.height);
+  return c;
+}
+
+// Plain magnification of the lines, panned along with the finger.
+function renderPan(e, lines, K, outW, fx, dir, dpr) {
+  const pad = Math.round(10 * dpr);
+  const ya = Math.max(0, lines[0].y0 - e.H * 0.15), yb = Math.min(e.h, lines[lines.length - 1].y1 + e.H * 0.15);
+  const sw = (outW - 2 * pad) / K;
+  let minX = Infinity, maxX = -Infinity;
+  for (const L of lines) { minX = Math.min(minX, L.x0); maxX = Math.max(maxX, L.x1); }
+  minX -= e.H * 0.4; maxX += e.H * 0.4;
+  let sx = dir === 'rtl' ? fx - 0.72 * sw : fx - 0.28 * sw;
+  sx = maxX - sw < minX ? (minX + maxX - sw) / 2 : clamp(sx, minX, maxX - sw);
+  const outH = Math.round((yb - ya) * K) + 2 * pad;
+  const c = mkCanvas(outW, outH), x = ctx2(c);
+  x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height);
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  const s0 = Math.max(0, sx), s1 = Math.min(e.w, sx + sw);
+  if (s1 > s0) x.drawImage(e.alphaCv, s0, ya, s1 - s0, yb - ya, pad + (s0 - sx) * K, pad, (s1 - s0) * K, (yb - ya) * K);
+  colorize(x, c.width, c.height);
+  return c;
+}
+//CORE-END
+
+/* ---------------- storage ---------------- */
+function loadS() { try { Object.assign(S, JSON.parse(localStorage.getItem('kb-settings') || '{}')); } catch (e) {} }
+function saveS() { try { localStorage.setItem('kb-settings', JSON.stringify(S)); } catch (e) {} }
+function bstate(id) {
+  let o = {}; try { o = JSON.parse(localStorage.getItem('kb-book-' + id) || '{}'); } catch (e) {}
+  return Object.assign({ page: 0, marks: [], dir: 'rtl', split: false, deskew: true }, o);
+}
+function saveB() { if (cur) try { localStorage.setItem('kb-book-' + cur.id, JSON.stringify(cur.st)); } catch (e) {} }
+
+const DB = {
+  db: null,
+  open() {
+    if (this.db) return Promise.resolve(this.db);
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('kb-books', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('books', { keyPath: 'id' });
+      r.onsuccess = () => { this.db = r.result; res(this.db); };
+      r.onerror = () => rej(r.error);
+    });
+  },
+  async run(mode, fn) {
+    const db = await this.open();
+    return new Promise((res, rej) => {
+      const t = db.transaction('books', mode), req = fn(t.objectStore('books'));
+      t.oncomplete = () => res(req ? req.result : undefined);
+      t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  },
+  all() { return this.run('readonly', s => s.getAll()); },
+  get(id) { return this.run('readonly', s => s.get(id)); },
+  put(b) { return this.run('readwrite', s => s.put(b)); },
+  del(id) { return this.run('readwrite', s => s.delete(id)); },
+};
+
+/* ---------------- state ---------------- */
+let cur = null;                 // open book
+const view = { e: null, s: 1, left: 0, top: 0, dw: 0, dh: 0 };
+let sel = null;                 // {i, fx, fxs, touchY}
+let showSeq = 0, lastNav = 0, renderKey = '', magCanvas = null;
+let chain = Promise.resolve();
+function queue(fn) { const p = chain.then(fn, fn); chain = p.catch(() => {}); return p; }
+
+const stage = $('#stage'), pageCv = $('#pageCv'), ovCv = $('#ovCv'), magCv = $('#magCv');
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(toast.tm); toast.tm = setTimeout(() => t.classList.add('hidden'), 1700);
+}
+function buzz(ms) { if (S.vibrate && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} }
+function screen(id) { $('#lib').classList.toggle('hidden', id !== 'lib'); $('#reader').classList.toggle('hidden', id !== 'reader'); }
+const vcount = () => cur ? (cur.st.split ? cur.numPages * 2 : cur.numPages) : 0;
+const dirOf = () => cur ? cur.st.dir : 'rtl';
+
+/* ---------------- library ---------------- */
+async function showLibrary() {
+  screen('lib');
+  const shelf = $('#shelf'); shelf.innerHTML = '';
+  let books = [];
+  try { books = await DB.all(); } catch (e) { toast('לא ניתן לפתוח את הספרייה'); }
+  books.sort((a, b) => b.added - a.added);
+  if (!books.length) {
+    shelf.innerHTML = '<div class="empty"><h2>עוד אין כאן ספרים</h2><p>אפשר להוסיף ספר סרוק או רגיל בקובץ PDF. הספר נשמר רק במכשיר הזה.</p><button class="primary" id="emptyAdd">הוספת ספר</button></div>';
+    $('#emptyAdd').onclick = () => $('#fileIn').click();
+    return;
+  }
+  for (const b of books) {
+    const el = document.createElement('button'); el.className = 'book';
+    el.innerHTML = '<div class="cover"></div><div class="name"></div>';
+    if (b.thumb) { const im = new Image(); im.src = b.thumb; im.alt = ''; el.firstChild.appendChild(im); }
+    el.lastChild.textContent = b.name;
+    el.onclick = () => openBook(b.id);
+    shelf.appendChild(el);
+  }
+  const add = document.createElement('button'); add.className = 'book add';
+  add.innerHTML = '<div class="cover"><svg><use href="#i-plus"/></svg></div><div class="name">הוספת ספר</div>';
+  add.onclick = () => $('#fileIn').click();
+  shelf.appendChild(add);
+}
+
+async function thumbOf(doc, pn, half, dir, width) {
+  const page = await doc.getPage(pn);
+  const v1 = page.getViewport({ scale: 1 });
+  const scale = (half >= 0 ? width * 2 : width) / v1.width;
+  const vp = page.getViewport({ scale });
+  const c = mkCanvas(vp.width, vp.height), x = ctx2(c);
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  await page.render({ canvasContext: x, viewport: vp }).promise;
+  if (half < 0) return c;
+  const hw = c.width >> 1, takeRight = (half === 0) === (dir === 'rtl');
+  const c2 = mkCanvas(hw, c.height);
+  ctx2(c2).drawImage(c, takeRight ? c.width - hw : 0, 0, hw, c.height, 0, 0, hw, c.height);
+  return c2;
+}
+
+async function addBookFile(file) {
+  if (!file) return;
+  if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') { toast('כרגע אפשר להוסיף רק קובצי PDF'); return; }
+  toast('מוסיף את הספר…');
+  try {
+    const buf = await file.arrayBuffer();
+    const doc = await pdfjsLib.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise;
+    const c = await thumbOf(doc, 1, -1, 'rtl', 300);
+    const thumb = c.toDataURL('image/jpeg', 0.82);
+    const pages = doc.numPages;
+    await doc.destroy();
+    const id = 'b' + Date.now().toString(36);
+    await DB.put({ id, name: file.name.replace(/\.pdf$/i, ''), file, added: Date.now(), pages, thumb });
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+    toast('הספר נוסף');
+    if (!$('#settings').classList.contains('hidden')) buildSettings();
+    if (!cur) showLibrary();
+  } catch (err) {
+    console.error(err); toast('לא ניתן לקרוא את הקובץ. ודאו שזה PDF תקין.');
+  }
+}
+$('#fileIn').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; addBookFile(f); });
+
+/* ---------------- reader ---------------- */
+async function openBook(id) {
+  let b;
+  try { b = await DB.get(id); } catch (e) {}
+  if (!b) { toast('הספר לא נמצא'); showLibrary(); return; }
+  closeBook();
+  screen('reader'); busy(true);
+  try {
+    const buf = await b.file.arrayBuffer();
+    const doc = await pdfjsLib.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise;
+    cur = { id, name: b.name, doc, numPages: doc.numPages, st: bstate(id), cache: new Map() };
+    try { localStorage.setItem('kb-last', id); } catch (e) {}
+    cur.st.page = clamp(cur.st.page | 0, 0, vcount() - 1);
+    applyChrome();
+    await showPage(cur.st.page);
+    wake();
+  } catch (err) {
+    console.error(err); busy(false); toast('לא ניתן לפתוח את הספר'); cur = null; showLibrary();
+  }
+}
+function closeBook() {
+  if (cur) { try { cur.doc.destroy(); } catch (e) {} }
+  cur = null; view.e = null; sel = null; showSeq++; chain = Promise.resolve();
+  hideMag();
+}
+
+function getEntry(vp) {
+  const c = cur.cache;
+  if (c.has(vp)) { const p = c.get(vp); c.delete(vp); c.set(vp, p); return p; }
+  const book = cur;
+  const p = queue(() => book === cur ? buildEntry(book, vp) : Promise.reject(new Error('closed')));
+  c.set(vp, p);
+  p.catch(() => { if (book.cache.get(vp) === p) book.cache.delete(vp); });
+  while (c.size > 4) c.delete(c.keys().next().value);
+  return p;
+}
+
+function busy(on) { $('#busy').classList.toggle('hidden', !on); if (on) { pageCv.style.visibility = 'hidden'; ovCv.style.visibility = 'hidden'; } }
+
+async function showPage(vp) {
+  cur.st.page = vp; saveB();
+  sel = null; hideMag(); updateLabel(); updateMarkBtn();
+  const seq = ++showSeq;
+  const tm = setTimeout(() => { if (seq === showSeq) busy(true); }, 120);
+  try {
+    const e = await getEntry(vp);
+    if (seq !== showSeq) return;
+    view.e = e; drawPage();
+  } catch (err) {
+    if (seq === showSeq) { console.error(err); toast('לא ניתן להציג את העמוד'); }
+  } finally {
+    clearTimeout(tm);
+    if (seq === showSeq) { busy(false); pageCv.style.visibility = ''; ovCv.style.visibility = ''; }
+  }
+  if (seq === showSeq) setTimeout(() => { if (cur && seq === showSeq && vp + 1 < vcount()) getEntry(vp + 1); }, 250);
+}
+
+function layoutPage() {
+  const e = view.e, W = stage.clientWidth, H = stage.clientHeight, pad = 10;
+  const s = Math.min((W - 2 * pad) / e.w, (H - 2 * pad) / e.h);
+  view.s = s; view.dw = e.w * s; view.dh = e.h * s;
+  view.left = (W - view.dw) / 2; view.top = (H - view.dh) / 2;
+}
+
+function drawPage() {
+  const e = view.e; if (!e) return;
+  makeAlphaCanvas(e); layoutPage();
+  const dpr = DPR();
+  pageCv.style.left = view.left + 'px'; pageCv.style.top = view.top + 'px';
+  pageCv.style.width = view.dw + 'px'; pageCv.style.height = view.dh + 'px';
+  pageCv.width = Math.max(1, Math.round(view.dw * dpr)); pageCv.height = Math.max(1, Math.round(view.dh * dpr));
+  const x = ctx2(pageCv);
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  x.drawImage(e.alphaCv, 0, 0, pageCv.width, pageCv.height);
+  colorize(x, pageCv.width, pageCv.height);
+  ovCv.width = Math.round(stage.clientWidth * dpr); ovCv.height = Math.round(stage.clientHeight * dpr);
+  ovCv.style.width = stage.clientWidth + 'px'; ovCv.style.height = stage.clientHeight + 'px';
+  renderKey = ''; drawOverlay(); updateRibbon();
+  if (sel) updateMag();
+}
+
+function selLines() {
+  const e = view.e; if (!e || !sel) return [];
+  return e.text.slice(sel.i, sel.i + S.lines);
+}
+
+function drawOverlay() {
+  const dpr = DPR(), x = ovCv.getContext('2d');
+  x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, ovCv.width, ovCv.height);
+  const L = selLines(); if (!L.length) return;
+  x.scale(dpr, dpr);
+  const s = view.s;
+  let xa = Infinity, xb = -Infinity;
+  for (const l of L) { xa = Math.min(xa, l.x0); xb = Math.max(xb, l.x1); }
+  const m = 6;
+  const r = { x: view.left + xa * s - m, y: view.top + L[0].y0 * s - m, w: (xb - xa) * s + 2 * m, h: (L[L.length - 1].y1 - L[0].y0) * s + 2 * m };
+  if (S.dim > 0) {
+    const [br, bg, bb] = hexRgb(S.bg);
+    x.fillStyle = `rgba(${br},${bg},${bb},${S.dim})`;
+    x.fillRect(view.left, view.top, view.dw, view.dh);
+    x.clearRect(r.x, r.y, r.w, r.h);
+  }
+  if (S.frame) {
+    x.strokeStyle = S.fg; x.globalAlpha = 0.75; x.lineWidth = 3;
+    x.beginPath(); x.roundRect ? x.roundRect(r.x, r.y, r.w, r.h, 8) : x.rect(r.x, r.y, r.w, r.h); x.stroke();
+    x.globalAlpha = 1;
+  }
+}
+
+function hideMag() { magCv.classList.add('hidden'); renderKey = ''; magCanvas = null; }
+
+function pickLine(e, y, curI) {
+  const T = e.text; if (!T.length) return -1;
+  if (curI >= 0 && curI < T.length) {
+    const L = T[curI], m = (L.y1 - L.y0) * 0.35;
+    if (y >= L.y0 - m && y <= L.y1 + m) return curI;
+  }
+  let best = -1, bd = Infinity;
+  T.forEach((L, i) => { const d = y < L.y0 ? L.y0 - y : y > L.y1 ? y - L.y1 : 0; if (d < bd) { bd = d; best = i; } });
+  return best;
+}
+
+function updateMag() {
+  const e = view.e, L = selLines();
+  if (!e || !L.length) { hideMag(); drawOverlay(); return; }
+  const dpr = DPR(), W = stage.clientWidth, H = stage.clientHeight;
+  const outW = Math.round((W - 16) * dpr), K = view.s * S.zoom * dpr;
+  const key = [e.vp, sel.i, S.lines, S.zoom, S.mode, S.wordSp, S.lineSp, S.fg, S.bg, S.sharp, e.boldKey, W, H, dirOf(), S.mode === 'pan' ? Math.round(sel.fxs * K / 2) : 0].join('|');
+  if (key !== renderKey) {
+    const keyLine = renderKey.split('|').slice(0, 2).join('|');
+    renderKey = key;
+    magCanvas = S.mode === 'pan' ? renderPan(e, L, K, outW, sel.fxs, dirOf(), dpr) : renderReflow(e, L, K, outW, dirOf(), dpr);
+    const maxH = Math.round(H * 0.62 * dpr);
+    magCv.width = magCanvas.width; magCv.height = Math.min(maxH, magCanvas.height);
+    magCv.getContext('2d').drawImage(magCanvas, 0, 0);
+    magCv.style.width = (magCv.width / dpr) + 'px'; magCv.style.height = (magCv.height / dpr) + 'px';
+    magCv.style.left = '8px';
+    if (keyLine !== key.split('|').slice(0, 2).join('|')) drawOverlay();
+  }
+  // placement
+  const hCss = magCv.height / dpr, gap = 16;
+  const top = view.top + L[0].y0 * view.s, bot = view.top + L[L.length - 1].y1 * view.s;
+  let y;
+  if (S.place === 'dock') {
+    y = top < hCss + 30 ? H - hCss - 10 : 10;
+  } else if (top - gap - hCss >= 6) {
+    y = top - gap - hCss;
+  } else {
+    y = Math.max(bot + gap, sel.touchY + 70);
+    if (y + hCss > H - 6) y = H - hCss - 6;
+  }
+  magCv.style.top = Math.round(y) + 'px';
+  magCv.classList.remove('hidden');
+}
+
+let rafOn = false;
+function schedule() {
+  if (rafOn) return; rafOn = true;
+  requestAnimationFrame(() => {
+    rafOn = false; if (!sel) return;
+    if (S.mode === 'pan') { const d = sel.fx - sel.fxs; sel.fxs += d * 0.35; if (Math.abs(d) > 0.5) schedule(); }
+    updateMag();
+  });
+}
+
+let activeId = null;
+function touchAt(ev) {
+  const e = view.e; if (!e || !e.text.length) return;
+  const r = stage.getBoundingClientRect();
+  const x = ev.clientX - r.left, y = ev.clientY - r.top;
+  let sy = (y - view.top) / view.s; if (S.fingerBelow) sy -= e.H * 0.9;
+  const sx = (x - view.left) / view.s;
+  const i = pickLine(e, sy, sel ? sel.i : -1);
+  if (i < 0) return;
+  if (!sel || sel.i !== i) { sel = { i, fx: sx, fxs: sx, touchY: y }; drawOverlay(); }
+  else { sel.fx = sx; sel.touchY = y; }
+  schedule();
+}
+stage.addEventListener('pointerdown', ev => {
+  if (activeId !== null) return;
+  if (ev.pointerType === 'touch' && (ev.width > 50 || ev.height > 50)) return; // palm
+  activeId = ev.pointerId;
+  try { stage.setPointerCapture(ev.pointerId); } catch (e) {}
+  touchAt(ev);
+});
+stage.addEventListener('pointermove', ev => { if (ev.pointerId === activeId) touchAt(ev); });
+const endTouch = ev => {
+  if (ev.pointerId !== activeId) return;
+  activeId = null;
+  if (!S.keep) { sel = null; hideMag(); drawOverlay(); }
+};
+stage.addEventListener('pointerup', endTouch);
+stage.addEventListener('pointercancel', endTouch);
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+function updateLabel() { $('#pageLabel').textContent = cur ? `עמוד ${cur.st.page + 1} מתוך ${vcount()}` : ''; }
+function isMarked() { return cur && cur.st.marks.includes(cur.st.page); }
+function updateMarkBtn() {
+  const on = isMarked();
+  $('#markBtn').classList.toggle('on', !!on);
+  $('#markUse').setAttribute('href', on ? '#i-mark-on' : '#i-mark');
+  $('#markBtn').setAttribute('aria-pressed', on ? 'true' : 'false');
+  updateRibbon();
+}
+function updateRibbon() {
+  const rb = $('#ribbon'), on = isMarked() && view.e;
+  rb.classList.toggle('hidden', !on);
+  if (on) { rb.style.top = (view.top - 2) + 'px'; rb.style.left = (dirOf() === 'rtl' ? view.left + 18 : view.left + view.dw - 48) + 'px'; }
+}
+function toggleMark() {
+  if (!cur) return;
+  const m = cur.st.marks, p = cur.st.page, i = m.indexOf(p);
+  if (i >= 0) { m.splice(i, 1); toast('הסימנייה הוסרה'); } else { m.push(p); m.sort((a, b) => a - b); toast('העמוד סומן'); }
+  saveB(); updateMarkBtn(); buzz(20);
+}
+
+function go(delta) {
+  if (!cur) return;
+  const now = performance.now();
+  if (now - lastNav < S.navDelay) return;
+  lastNav = now;
+  const n = cur.st.page + delta;
+  if (n < 0) { toast('זה העמוד הראשון'); buzz(60); return; }
+  if (n >= vcount()) { toast('זה העמוד האחרון'); buzz(60); return; }
+  buzz(12); showPage(n);
+}
+$('#prevBtn').addEventListener('click', () => go(-1));
+$('#nextBtn').addEventListener('click', () => go(1));
+document.addEventListener('keydown', ev => {
+  if ($('#reader').classList.contains('hidden') || !$('#settings').classList.contains('hidden')) return;
+  const rtl = dirOf() === 'rtl';
+  if (ev.key === 'ArrowLeft') go(rtl ? 1 : -1);
+  if (ev.key === 'ArrowRight') go(rtl ? -1 : 1);
+});
+
+// bookmark: tap toggles, hold opens the list
+(function () {
+  const b = $('#markBtn'); let t = null, long = false, down = false;
+  b.addEventListener('pointerdown', () => { down = true; long = false; t = setTimeout(() => { long = true; buzz(25); openMarks(); }, 650); });
+  b.addEventListener('pointerup', () => { clearTimeout(t); if (down && !long) toggleMark(); down = false; });
+  b.addEventListener('pointercancel', () => { clearTimeout(t); down = false; });
+  b.addEventListener('keydown', ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggleMark(); } });
+})();
+
+async function openMarks() {
+  const g = $('#marksGrid'); g.innerHTML = '';
+  $('#marks').classList.remove('hidden');
+  const m = cur ? cur.st.marks.slice() : [];
+  if (!m.length) { g.innerHTML = '<p style="grid-column:1/-1">אין עדיין סימניות. לחיצה על כפתור הסימנייה מסמנת את העמוד.</p>'; return; }
+  const book = cur;
+  for (const vp of m) {
+    const el = document.createElement('button');
+    if (vp === cur.st.page) el.className = 'here';
+    el.innerHTML = '<div class="ph"></div><span></span>';
+    el.lastChild.textContent = 'עמוד ' + (vp + 1);
+    el.onclick = () => { $('#marks').classList.add('hidden'); if (cur && vp !== cur.st.page) showPage(vp); };
+    g.appendChild(el);
+  }
+  // thumbnails, one by one
+  const els = [...g.children];
+  for (let k = 0; k < m.length; k++) {
+    if (book !== cur || $('#marks').classList.contains('hidden')) return;
+    try {
+      const { pn, half } = vpToPdf(book, m[k]);
+      const c = await thumbOf(book.doc, pn, half, book.st.dir, 220);
+      c.className = ''; c.style.width = '100%'; c.style.height = 'auto'; c.style.borderRadius = '6px';
+      els[k].firstChild.replaceWith(c);
+    } catch (e) {}
+  }
+}
+$('#marksClose').onclick = () => $('#marks').classList.add('hidden');
+$('#marks').addEventListener('click', e => { if (e.target.id === 'marks') $('#marks').classList.add('hidden'); });
+
+$('#homeBtn').onclick = () => { closeBook(); showLibrary(); };
+
+/* ---------------- chrome & settings apply ---------------- */
+function applyChrome() {
+  const r = $('#reader');
+  r.style.setProperty('--rfg', S.fg); r.style.setProperty('--rbg', S.bg);
+  r.style.setProperty('--btn', ({ M: 74, L: 92, XL: 118 })[S.btn] + 'px');
+  document.querySelector('meta[name=theme-color]').setAttribute('content', S.bg);
+  const rtl = dirOf() === 'rtl';
+  $('#navBar').style.direction = rtl ? 'rtl' : 'ltr';
+  // chevron points right by default
+  $('#prevIco').style.transform = rtl ? '' : 'scaleX(-1)';
+  $('#nextIco').style.transform = rtl ? 'scaleX(-1)' : '';
+}
+function refreshReader() {
+  buildLut(); applyChrome();
+  if (cur && view.e) { renderKey = ''; drawPage(); }
+}
+window.addEventListener('resize', () => { if (cur && view.e) { clearTimeout(refreshReader.tm); refreshReader.tm = setTimeout(() => { renderKey = ''; drawPage(); }, 120); } });
+
+/* ---------------- parent gate ---------------- */
+function holdButton(btn, ms, fn, tapFn) {
+  let t = null, fired = false;
+  btn.addEventListener('pointerdown', () => { fired = false; btn.classList.add('holding'); t = setTimeout(() => { fired = true; btn.classList.remove('holding'); buzz(30); fn(); }, ms); });
+  const stop = () => { clearTimeout(t); btn.classList.remove('holding'); };
+  btn.addEventListener('pointerup', stop); btn.addEventListener('pointercancel', stop); btn.addEventListener('pointerleave', stop);
+  btn.addEventListener('click', () => { if (!fired && tapFn) tapFn(); });
+}
+let gateAns = 0;
+function openGate() {
+  const a = 12 + Math.floor(Math.random() * 8), b = 3 + Math.floor(Math.random() * 7);
+  gateAns = a * b;
+  $('#gateQ').textContent = `${a} × ${b} = ?`;
+  $('#gateIn').value = ''; $('#gateErr').textContent = '';
+  $('#gate').classList.remove('hidden');
+  setTimeout(() => $('#gateIn').focus(), 50);
+}
+function gateTry() {
+  if (parseInt($('#gateIn').value, 10) === gateAns) { $('#gate').classList.add('hidden'); openSettings(); }
+  else { $('#gateErr').textContent = 'לא נכון, נסו שוב'; $('#gateIn').value = ''; }
+}
+$('#gateOk').onclick = gateTry;
+$('#gateIn').addEventListener('keydown', e => { if (e.key === 'Enter') gateTry(); });
+$('#gateNo').onclick = () => $('#gate').classList.add('hidden');
+holdButton($('#gearBtn'), 2500, openGate, () => toast('להגדרות: לחיצה ארוכה'));
+holdButton($('#libGear'), 2500, openGate, () => toast('להגדרות: לחיצה ארוכה'));
+
+/* ---------------- settings panel ---------------- */
+function set(k, v, opts) {
+  S[k] = v; saveS();
+  if (k === 'fg' || k === 'bg' || k === 'sharp' || k === 'bold') { if (!(opts && opts.keepPreset)) S.preset = 'custom'; saveS(); }
+  refreshReader();
+  if (opts && opts.rebuild) buildSettings();
+}
+function el(tag, attrs, ...kids) {
+  const n = document.createElement(tag);
+  for (const k in attrs || {}) { if (k === 'on') for (const ev in attrs.on) n.addEventListener(ev, attrs.on[ev]); else if (k === 'text') n.textContent = attrs[k]; else n.setAttribute(k, attrs[k]); }
+  for (const c of kids) if (c) n.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  return n;
+}
+function row(title, ctrl, hint) { return el('div', { class: 'row' }, el('label', { class: 't', text: title }), ctrl, hint ? el('div', { class: 'hint', text: hint }) : null); }
+function seg(key, opts, onSet) {
+  const box = el('div', { class: 'seg' });
+  for (const [v, label] of opts) {
+    const b = el('button', { 'aria-pressed': String(S[key] === v), text: label });
+    b.onclick = () => { onSet ? onSet(v) : set(key, v); [...box.children].forEach(c => c.setAttribute('aria-pressed', String(c === b))); };
+    box.appendChild(b);
+  }
+  return box;
+}
+function rng(key, min, max, step, fmt) {
+  const out = el('output', { text: fmt(S[key]) });
+  const inp = el('input', { type: 'range', min, max, step, value: S[key] });
+  inp.addEventListener('input', () => { out.textContent = fmt(+inp.value); });
+  inp.addEventListener('change', () => set(key, +inp.value));
+  return el('div', { class: 'rng' }, inp, out);
+}
+function sw(title, getV, onSet) {
+  const b = el('button', { 'aria-pressed': String(!!getV()), 'aria-label': title });
+  b.onclick = () => { const v = !getV(); onSet(v); b.setAttribute('aria-pressed', String(v)); };
+  return el('div', { class: 'row switch' }, el('span', { text: title }), b);
+}
+function bookSet(k, v) {
+  if (!cur) return;
+  const st = cur.st;
+  if (k === 'split' && v !== st.split) {
+    st.page = v ? st.page * 2 : st.page >> 1;
+    st.marks = [...new Set(st.marks.map(m => v ? m * 2 : m >> 1))].sort((a, b) => a - b);
+  }
+  st[k] = v; saveB();
+  cur.cache.clear(); chain = Promise.resolve(); view.e = null;
+  applyChrome(); updateLabel(); showPage(clamp(st.page, 0, vcount() - 1));
+}
+
+function buildSettings() {
+  const B = $('#setBody'); B.innerHTML = '';
+  // appearance
+  const pre = el('div', { class: 'presets' });
+  for (const p of PRESETS) {
+    const b = el('button', { 'aria-pressed': String(S.preset === p.id) },
+      el('div', { class: 'sw', style: `background:${p.bg};color:${p.fg};border:2px solid ${p.fg}` }, 'אבג'),
+      el('div', { class: 'nm', text: p.name }));
+    b.onclick = () => { Object.assign(S, { preset: p.id, fg: p.fg, bg: p.bg, sharp: p.sharp, bold: p.bold }); saveS(); refreshReader(); buildSettings(); };
+    pre.appendChild(b);
+  }
+  const fgIn = el('input', { type: 'color', value: S.fg }), bgIn = el('input', { type: 'color', value: S.bg });
+  fgIn.addEventListener('change', () => set('fg', fgIn.value, { rebuild: true }));
+  bgIn.addEventListener('change', () => set('bg', bgIn.value, { rebuild: true }));
+  B.append(
+    el('div', { class: 'sec' }, el('h3', { text: 'מראה' }),
+      row('ערכת צבעים', pre, 'הערכות נבדלות בבהירות ולא רק בגוון, כך שהן מתאימות גם לקשיי הבחנה בצבעים. מומלץ לכוון את בהירות המסך ידנית לרמה מתונה ולכבות בהירות אוטומטית; האפליקציה לא יכולה לשלוט בבהירות.'),
+      row('צבעים מותאמים', el('div', { class: 'colors' }, el('label', {}, fgIn, 'טקסט'), el('label', {}, bgIn, 'רקע'))),
+      row('חדות האותיות', seg('sharp', [[0, 'רכה'], [1, 'רגילה'], [2, 'חדה']], v => set('sharp', v))),
+      row('עובי האותיות', seg('bold', [[0, 'רגיל'], [1, 'עבה מעט'], [2, 'עבה'], [3, 'עבה מאוד']], v => set('bold', v)), 'מעבה את קווי האותיות בסריקה. עוזר כשהדפוס דק או חיוור.'),
+      row('עמעום שאר העמוד', rng('dim', 0, 0.8, 0.05, v => Math.round(v * 100) + '%'), 'השורה שנבחרה נשארת בהירה והשאר מעומעם, כמו סרגל קריאה.'),
+      sw('מסגרת סביב השורה שנבחרה', () => S.frame, v => set('frame', v)),
+    ),
+    el('div', { class: 'sec' }, el('h3', { text: 'זכוכית מגדלת' }),
+      row('הגדלה', rng('zoom', 1.25, 4, 0.25, v => '×' + v.toFixed(2).replace(/0$/, '')), 'לרוב ההגדלה הנוחה היא הקטנה ביותר שבה הקריאה שוטפת. הגדלה גבוהה מדי מכניסה פחות מילים לחלון ומאטה את הקריאה.'),
+      el('div', { class: 'row' }, el('button', { class: 'ghost', text: 'כיול הגדלה לפי הספר', on: { click: openCalib } }), el('div', { class: 'hint', text: 'מציג שורה מהעמוד הפתוח בכמה גדלים כדי לבחור את המתאים.' })),
+      row('מספר שורות בזכוכית', seg('lines', [[1, 'שורה אחת'], [2, 'שתיים'], [3, 'שלוש']], v => set('lines', v))),
+      row('אופן התצוגה', seg('mode', [['reflow', 'השורה כולה, מסודרת מחדש'], ['pan', 'הגדלה רגילה שזזה עם האצבע']], v => set('mode', v)), 'בסידור מחדש המילים של השורה נפרסות על פני כמה שורות גדולות, והתמונה לא זזה בזמן הקריאה. זה המצב המומלץ עם ניסטגמוס.'),
+      row('מיקום החלון', seg('place', [['float', 'צף מעל האצבע'], ['dock', 'קבוע בראש המסך']], v => set('place', v))),
+      row('איזו שורה נבחרת', seg('fingerBelow', [[false, 'השורה שמתחת לאצבע'], [true, 'השורה שמעל האצבע']], v => set('fingerBelow', v)), 'אם הוא נוהג להניח את האצבע מתחת לשורה שהוא קורא, בחרו “השורה שמעל האצבע”.'),
+      row('רווח בין מילים', rng('wordSp', 0, 1.5, 0.1, v => '+' + Math.round(v * 100) + '%')),
+      row('רווח בין שורות בזכוכית', rng('lineSp', 1, 2, 0.1, v => '×' + v.toFixed(1))),
+      sw('הזכוכית נשארת אחרי הרמת האצבע', () => S.keep, v => set('keep', v)),
+    ),
+    el('div', { class: 'sec' }, el('h3', { text: 'כפתורים' }),
+      row('גודל כפתורים', seg('btn', [['M', 'בינוני'], ['L', 'גדול'], ['XL', 'ענק']], v => set('btn', v))),
+      row('השהיה בין דפדופים', rng('navDelay', 200, 1200, 50, v => (v / 1000).toFixed(2) + ' שנ׳'), 'מונע דילוג על שני עמודים בלחיצה כפולה בטעות.'),
+      sw('רטט בלחיצה', () => S.vibrate, v => set('vibrate', v)),
+    ),
+  );
+  if (cur) {
+    B.append(el('div', { class: 'sec' }, el('h3', { text: 'הספר הפתוח' }),
+      row('כיוון קריאה', seg('_dir', [['rtl', 'מימין לשמאל'], ['ltr', 'משמאל לימין']], v => bookSet('dir', v))),
+      sw('כל עמוד בקובץ הוא שני עמודי ספר (סריקה כפולה)', () => cur && cur.st.split, v => bookSet('split', v)),
+      sw('יישור אוטומטי של סריקה עקומה', () => cur && cur.st.deskew, v => bookSet('deskew', v)),
+    ));
+    // seg() reads S[key]; mark the current direction manually
+    const dirSeg = B.lastChild.querySelector('.seg');
+    [...dirSeg.children].forEach((c, i) => c.setAttribute('aria-pressed', String((i === 0) === (cur.st.dir === 'rtl'))));
+  }
+  const list = el('div', { class: 'booklist' });
+  B.append(el('div', { class: 'sec' }, el('h3', { text: 'ספרים' }),
+    el('div', { class: 'row' }, list, el('div', { style: 'margin-top:10px' }, el('button', { class: 'ghost', text: 'הוספת ספר', on: { click: () => $('#fileIn').click() } }))),
+    sw('פתיחה אוטומטית של הספר האחרון', () => S.autoOpen, v => set('autoOpen', v)),
+  ));
+  DB.all().then(books => {
+    books.sort((a, b) => b.added - a.added);
+    if (!books.length) list.appendChild(el('div', { class: 'hint', text: 'אין ספרים.' }));
+    for (const b of books) {
+      const del = el('button', { class: 'ghost danger', text: 'מחיקה' });
+      del.onclick = async () => {
+        if (!del.dataset.arm) { del.dataset.arm = 1; del.textContent = 'למחוק? לחצו שוב'; return; }
+        if (cur && cur.id === b.id) { closeBook(); }
+        await DB.del(b.id); try { localStorage.removeItem('kb-book-' + b.id); } catch (e) {}
+        buildSettings(); if (!cur) showLibrary();
+      };
+      list.appendChild(el('div', { class: 'bk' }, el('span', { text: b.name }), del));
+    }
+  }).catch(() => {});
+}
+function openSettings() { buildSettings(); $('#settings').classList.remove('hidden'); }
+function closeSettings() { $('#settings').classList.add('hidden'); }
+$('#setClose').onclick = closeSettings; $('#setDone').onclick = closeSettings;
+$('#setReset').onclick = () => {
+  const keep = { autoOpen: S.autoOpen };
+  S = Object.assign({}, DEFAULTS, keep); saveS(); refreshReader(); buildSettings(); toast('ההגדרות אופסו');
+};
+
+/* ---------------- calibration ---------------- */
+function openCalib() {
+  const e = view.e;
+  if (!e || !e.text.length) { toast('פתחו קודם עמוד עם טקסט בספר'); return; }
+  const mid = e.text.slice(Math.floor(e.text.length * 0.2), Math.ceil(e.text.length * 0.8));
+  const pool = mid.length ? mid : e.text;
+  const L = pool.reduce((a, b) => (b.words.length > a.words.length ? b : a), pool[0]);
+  const list = $('#calibList'); list.innerHTML = '';
+  $('#calib').classList.remove('hidden');
+  const dpr = DPR();
+  const outW = Math.round(Math.max(200, $('#calib .body').clientWidth - 110) * dpr);
+  for (const z of [4, 3.5, 3, 2.5, 2, 1.75, 1.5, 1.25]) {
+    const c = renderReflow(e, [L], view.s * z * dpr, outW, dirOf(), dpr);
+    c.style.width = (c.width / dpr) + 'px'; c.style.height = (c.height / dpr) + 'px';
+    const b = el('button', { class: S.zoom === z ? 'sel' : '' }, el('b', { text: '×' + z }), c);
+    b.onclick = () => { set('zoom', z); $('#calib').classList.add('hidden'); buildSettings(); toast('ההגדלה נקבעה ל־×' + z); };
+    list.appendChild(b);
+  }
+}
+$('#calibClose').onclick = () => $('#calib').classList.add('hidden');
+
+/* ---------------- misc ---------------- */
+let wl = null;
+async function wake() { try { if (cur && 'wakeLock' in navigator && document.visibilityState === 'visible') wl = await navigator.wakeLock.request('screen'); } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') wake(); });
+
+async function start() {
+  loadS(); buildLut();
+  if (!window.pdfjsLib) {
+    document.body.insertAdjacentHTML('beforeend', '<div id="fatal">לא ניתן לטעון את רכיב קריאת ה־PDF. בדקו את החיבור לאינטרנט ופתחו שוב.</div>');
+    return;
+  }
+  if (!window.pdfjsWorker) pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+  applyChrome();
+  let last = null; try { last = localStorage.getItem('kb-last'); } catch (e) {}
+  if (S.autoOpen && last) {
+    const b = await DB.get(last).catch(() => null);
+    if (b) { openBook(last); return; }
+  }
+  showLibrary();
+}
+if ('serviceWorker' in navigator && document.querySelector('link[rel=manifest]')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+window.__kb = { get S() { return S; }, view, get cur() { return cur; } };
+start();
+})();
+</script>
+</body>
+</html>
