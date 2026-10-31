@@ -659,7 +659,7 @@ const PRESETS = [
 const DEFAULTS = {
   preset: 'warm', fg: '#17130d', bg: '#efe2bf', sharp: 1, bold: 0,
   zoom: 2, lines: 1, mode: 'reflow', place: 'float', wordSp: 0.3, lineSp: 1.3,
-  fingerBelow: false, keep: true, dim: 0.35, frame: true,
+  fingerBelow: false, keep: true, dim: 0.35, frame: true, focusLine: true,
   btn: 'L', vibrate: true, navDelay: 450, autoOpen: true,
 };
 let S = Object.assign({}, DEFAULTS);
@@ -752,7 +752,7 @@ function makeAlphaCanvas(e) {
 }
 
 // Re-flow the words of the chosen lines into rows that fit the window, at the chosen magnification.
-function renderReflow(e, lines, K, outW, dir, dpr) {
+function reflowLayout(e, lines, K, outW, dpr, dir) {
   const pad = Math.round(12 * dpr);
   let asc = 0, desc = 0;
   for (const L of lines) { asc = Math.max(asc, L.base - L.y0); desc = Math.max(desc, L.y1 - L.base); }
@@ -763,7 +763,7 @@ function renderReflow(e, lines, K, outW, dir, dpr) {
   const innerW = outW - 2 * pad;
   const rows = [[]]; let rowW = 0;
   for (const L of lines) {
-    const ws = L.words.slice().sort((a, b) => dir === 'rtl' ? b.x0 - a.x0 : a.x0 - b.x0);
+    const ws = L.words.slice().sort((a, b) => dir === 'ltr' ? a.x0 - b.x0 : b.x0 - a.x0);
     for (const w of ws) {
       const ww = Math.min(innerW, Math.round((w.x1 - w.x0) * K));
       const need = rowW ? rowW + gap + ww : ww;
@@ -772,10 +772,25 @@ function renderReflow(e, lines, K, outW, dir, dpr) {
     }
   }
   const n = rows.length;
-  const outH = 2 * pad + n * rowH + (n - 1) * rowGap;
-  const c = mkCanvas(outW, outH), x = ctx2(c);
+  return { pad, asc, desc, rowH, rowGap, gap, rows, outH: 2 * pad + n * rowH + (n - 1) * rowGap };
+}
+
+function fadeRects(x, rects) {
+  if (!rects.length) return;
+  const [r, g, b] = hexRgb(S.bg);
+  x.fillStyle = `rgba(${r},${g},${b},0.55)`;
+  for (const q of rects) x.fillRect(q[0], q[1], q[2], q[3]);
+}
+
+// opt.minH keeps the window the same height for every block on the page; opt.focus = line to keep at full strength.
+function renderReflow(e, lines, K, outW, dir, dpr, opt) {
+  opt = opt || {};
+  const Lo = reflowLayout(e, lines, K, outW, dpr, dir);
+  const { pad, asc, desc, rowH, rowGap, gap, rows } = Lo;
+  const c = mkCanvas(outW, Math.max(Lo.outH, opt.minH || 0)), x = ctx2(c);
   x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height);
   x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  const faded = [];
   rows.forEach((row, ri) => {
     const top = pad + ri * (rowH + rowGap);
     let cur = dir === 'rtl' ? outW - pad : pad;
@@ -785,15 +800,22 @@ function renderReflow(e, lines, K, outW, dir, dpr) {
       const sy = L.base - asc, sy0 = Math.max(0, sy), sy1 = Math.min(e.h, L.base + desc);
       const sw = w.x1 - w.x0;
       if (sy1 > sy0 && sw > 0) x.drawImage(e.alphaCv, w.x0, sy0, sw, sy1 - sy0, dx, top + (sy0 - sy) * K, ww, (sy1 - sy0) * K);
+      if (opt.focus && L !== opt.focus) faded.push([dx - 2, top - 2, ww + 4, rowH + 4]);
       cur = dir === 'rtl' ? dx - gap : dx + ww + gap;
     }
   });
   colorize(x, c.width, c.height);
+  fadeRects(x, faded);
   return c;
 }
 
 // Plain magnification of the lines, panned along with the finger.
-function renderPan(e, lines, K, outW, fx, dir, dpr) {
+function panHeight(e, lines, K, dpr) {
+  const ya = Math.max(0, lines[0].y0 - e.H * 0.15), yb = Math.min(e.h, lines[lines.length - 1].y1 + e.H * 0.15);
+  return Math.round((yb - ya) * K) + 2 * Math.round(10 * dpr);
+}
+function renderPan(e, lines, K, outW, fx, dir, dpr, opt) {
+  opt = opt || {};
   const pad = Math.round(10 * dpr);
   const ya = Math.max(0, lines[0].y0 - e.H * 0.15), yb = Math.min(e.h, lines[lines.length - 1].y1 + e.H * 0.15);
   const sw = (outW - 2 * pad) / K;
@@ -802,13 +824,14 @@ function renderPan(e, lines, K, outW, fx, dir, dpr) {
   minX -= e.H * 0.4; maxX += e.H * 0.4;
   let sx = dir === 'rtl' ? fx - 0.72 * sw : fx - 0.28 * sw;
   sx = maxX - sw < minX ? (minX + maxX - sw) / 2 : clamp(sx, minX, maxX - sw);
-  const outH = Math.round((yb - ya) * K) + 2 * pad;
+  const outH = Math.max(Math.round((yb - ya) * K) + 2 * pad, opt.minH || 0);
   const c = mkCanvas(outW, outH), x = ctx2(c);
   x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height);
   x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
   const s0 = Math.max(0, sx), s1 = Math.min(e.w, sx + sw);
   if (s1 > s0) x.drawImage(e.alphaCv, s0, ya, s1 - s0, yb - ya, pad + (s0 - sx) * K, pad, (s1 - s0) * K, (yb - ya) * K);
   colorize(x, c.width, c.height);
+  if (opt.focus) fadeRects(x, lines.filter(L => L !== opt.focus).map(L => [0, pad + (L.y0 - ya) * K - 2, outW, (L.y1 - L.y0) * K + 4]));
   return c;
 }
 //CORE-END
@@ -1013,7 +1036,7 @@ function drawPage() {
 
 function selLines() {
   const e = view.e; if (!e || !sel) return [];
-  return e.text.slice(sel.i, sel.i + S.lines);
+  return e.text.slice(sel.b, sel.be);
 }
 
 function drawOverlay() {
@@ -1052,35 +1075,66 @@ function pickLine(e, y, curI) {
   return best;
 }
 
+// Fixed groups of S.lines lines. A group never jumps across a picture or a big gap (new paragraph block).
+function blocksOf(e) {
+  if (e.blk && e.blk.n === S.lines) return e.blk.list;
+  const T = e.text, list = [];
+  const pitches = []; for (let k = 1; k < T.length; k++) pitches.push(T[k].y0 - T[k - 1].y0);
+  pitches.sort((a, b) => a - b);
+  const pitch = pitches.length ? pitches[pitches.length >> 1] : e.H * 2;
+  let start = 0;
+  for (let k = 1; k <= T.length; k++) {
+    const brk = k === T.length || k - start >= S.lines || T[k].y0 - T[k - 1].y0 > pitch * 1.8;
+    if (brk) { list.push([start, k]); start = k; }
+  }
+  e.blk = { n: S.lines, list };
+  return list;
+}
+function blockOfLine(e, i) { for (const b of blocksOf(e)) if (i >= b[0] && i < b[1]) return b; return [i, i + 1]; }
+
+// Tallest window any block on this page needs, so the window keeps one size while he reads the page.
+function pageMagHeight(e, K, outW, dpr) {
+  const key = [S.lines, S.zoom, S.mode, S.wordSp, S.lineSp, outW, K.toFixed(4), dirOf()].join('|');
+  if (e.magH && e.magH.key === key) return e.magH.h;
+  let h = 0;
+  for (const [b0, b1] of blocksOf(e)) {
+    const L = e.text.slice(b0, b1);
+    h = Math.max(h, S.mode === 'pan' ? panHeight(e, L, K, dpr) : reflowLayout(e, L, K, outW, dpr, dirOf()).outH);
+  }
+  e.magH = { key, h };
+  return h;
+}
+
 function updateMag() {
   const e = view.e, L = selLines();
   if (!e || !L.length) { hideMag(); drawOverlay(); return; }
   const dpr = DPR(), W = stage.clientWidth, H = stage.clientHeight;
   const outW = Math.round((W - 16) * dpr), K = view.s * S.zoom * dpr;
-  const key = [e.vp, sel.i, S.lines, S.zoom, S.mode, S.wordSp, S.lineSp, S.fg, S.bg, S.sharp, e.boldKey, W, H, dirOf(), S.mode === 'pan' ? Math.round(sel.fxs * K / 2) : 0].join('|');
+  const focus = S.focusLine && L.length > 1 ? e.text[sel.i] : null;
+  const key = [e.vp, sel.b, focus ? sel.i : -1, S.lines, S.zoom, S.mode, S.wordSp, S.lineSp, S.fg, S.bg, S.sharp, e.boldKey, W, H, dirOf(), S.mode === 'pan' ? Math.round(sel.fxs * K / 2) : 0].join('|');
+  const maxH = Math.round(H * 0.62 * dpr);
+  const winH = Math.min(maxH, pageMagHeight(e, K, outW, dpr));
   if (key !== renderKey) {
-    const keyLine = renderKey.split('|').slice(0, 2).join('|');
+    const blockChanged = renderKey.split('|').slice(0, 2).join('|') !== key.split('|').slice(0, 2).join('|');
     renderKey = key;
-    magCanvas = S.mode === 'pan' ? renderPan(e, L, K, outW, sel.fxs, dirOf(), dpr) : renderReflow(e, L, K, outW, dirOf(), dpr);
-    const maxH = Math.round(H * 0.62 * dpr);
-    magCv.width = magCanvas.width; magCv.height = Math.min(maxH, magCanvas.height);
+    const opt = { minH: winH, focus };
+    magCanvas = S.mode === 'pan' ? renderPan(e, L, K, outW, sel.fxs, dirOf(), dpr, opt) : renderReflow(e, L, K, outW, dirOf(), dpr, opt);
+    // resizing a canvas blanks it, so only resize when the size really changes
+    if (magCv.width !== outW || magCv.height !== winH) {
+      magCv.width = outW; magCv.height = winH;
+      magCv.style.width = (outW / dpr) + 'px'; magCv.style.height = (winH / dpr) + 'px';
+    }
     magCv.getContext('2d').drawImage(magCanvas, 0, 0);
-    magCv.style.width = (magCv.width / dpr) + 'px'; magCv.style.height = (magCv.height / dpr) + 'px';
     magCv.style.left = '8px';
-    if (keyLine !== key.split('|').slice(0, 2).join('|')) drawOverlay();
+    if (blockChanged) drawOverlay();
   }
-  // placement
-  const hCss = magCv.height / dpr, gap = 16;
+  // placement depends only on the block, so the window stays put while he reads it
+  const hCss = winH / dpr, gap = 16;
   const top = view.top + L[0].y0 * view.s, bot = view.top + L[L.length - 1].y1 * view.s;
   let y;
-  if (S.place === 'dock') {
-    y = top < hCss + 30 ? H - hCss - 10 : 10;
-  } else if (top - gap - hCss >= 6) {
-    y = top - gap - hCss;
-  } else {
-    y = Math.max(bot + gap, sel.touchY + 70);
-    if (y + hCss > H - 6) y = H - hCss - 6;
-  }
+  if (S.place === 'dock') y = top < hCss + 30 ? H - hCss - 10 : 10;
+  else if (top - gap - hCss >= 6) y = top - gap - hCss;
+  else y = Math.min(bot + gap, H - hCss - 6);
   magCv.style.top = Math.round(y) + 'px';
   magCv.classList.remove('hidden');
 }
@@ -1104,8 +1158,9 @@ function touchAt(ev) {
   const sx = (x - view.left) / view.s;
   const i = pickLine(e, sy, sel ? sel.i : -1);
   if (i < 0) return;
-  if (!sel || sel.i !== i) { sel = { i, fx: sx, fxs: sx, touchY: y }; drawOverlay(); }
-  else { sel.fx = sx; sel.touchY = y; }
+  const [b, be] = blockOfLine(e, i);   // fixed groups: 1-3, 4-6, 7-9…
+  if (!sel || sel.b !== b || sel.be !== be) { sel = { i, b, be, fx: sx, fxs: sx, touchY: y }; drawOverlay(); }
+  else { sel.i = i; sel.fx = sx; sel.touchY = y; }
   schedule();
 }
 stage.addEventListener('pointerdown', ev => {
@@ -1323,7 +1378,8 @@ function buildSettings() {
     el('div', { class: 'sec' }, el('h3', { text: 'זכוכית מגדלת' }),
       row('הגדלה', rng('zoom', 1.25, 4, 0.25, v => '×' + v.toFixed(2).replace(/0$/, '')), 'לרוב ההגדלה הנוחה היא הקטנה ביותר שבה הקריאה שוטפת. הגדלה גבוהה מדי מכניסה פחות מילים לחלון ומאטה את הקריאה.'),
       el('div', { class: 'row' }, el('button', { class: 'ghost', text: 'כיול הגדלה לפי הספר', on: { click: openCalib } }), el('div', { class: 'hint', text: 'מציג שורה מהעמוד הפתוח בכמה גדלים כדי לבחור את המתאים.' })),
-      row('מספר שורות בזכוכית', seg('lines', [[1, 'שורה אחת'], [2, 'שתיים'], [3, 'שלוש']], v => set('lines', v))),
+      row('מספר שורות בזכוכית', seg('lines', [[1, 'שורה אחת'], [2, 'שתיים'], [3, 'שלוש']], v => set('lines', v)), 'העמוד מחולק לקבוצות קבועות (למשל שורות 1–3, 4–6). החלון מתחלף רק כשהאצבע עוברת לקבוצה הבאה, ואף שורה לא מופיעה פעמיים.'),
+      sw('הדגשת השורה שהאצבע עליה בתוך החלון', () => S.focusLine, v => set('focusLine', v)),
       row('אופן התצוגה', seg('mode', [['reflow', 'השורה כולה, מסודרת מחדש'], ['pan', 'הגדלה רגילה שזזה עם האצבע']], v => set('mode', v)), 'בסידור מחדש המילים של השורה נפרסות על פני כמה שורות גדולות, והתמונה לא זזה בזמן הקריאה. זה המצב המומלץ עם ניסטגמוס.'),
       row('מיקום החלון', seg('place', [['float', 'צף מעל האצבע'], ['dock', 'קבוע בראש המסך']], v => set('place', v))),
       row('איזו שורה נבחרת', seg('fingerBelow', [[false, 'השורה שמתחת לאצבע'], [true, 'השורה שמעל האצבע']], v => set('fingerBelow', v)), 'אם הוא נוהג להניח את האצבע מתחת לשורה שהוא קורא, בחרו “השורה שמעל האצבע”.'),
